@@ -41,7 +41,6 @@ app.get("/members", function (req, res) {
   res.send(signUp);
 });
 
-
 app.put("/editAccount/:email", function (req, res) {
   let findAmember = signUp.find((c) => c.email === req.params.email);
   if (!findAmember)
@@ -62,6 +61,7 @@ app.delete("/deleteAccount/:accountNum", function (req, res) {
   classes.splice(index, 1);
   res.send(findAmember);
 });
+
 function ensureToken(req, res, next){
   const  bearerHeader = req.headers["authorization"];
   if (typeof bearerHeader !== 'undefined'){
@@ -84,20 +84,6 @@ async function main(){
     let classRecords = await db.collection('classes').find({}).toArray();
     res.send(classRecords);
   });
-  // working - Add a class
-  app.post("/AddClasses", async function (req, res) {
-    console.log(req.body)
-    const postAclass = {
-      name: req.body.name,
-      location: req.body.location,
-      price: req.body.price,
-      schedule: req.body.schedule,
-      link: req.body.link,
-    };
-    const db = MongoUtil.getDB();
-    const classes = await db.collection('classes').insertOne(postAclass)
-    res.send(classes);
-  });
   // working - Pull-up a class
   app.get("/class/:id", async function (req, res) {
     let id = req.params.id
@@ -118,9 +104,17 @@ async function main(){
     let updateAclass = {
       'name': req.body.name,
       'location': req.body.location,
+      'schedule': req.body.schedule,
+      'duration': req.body.duration,
+      'complexity': [req.body.complexity],
+      'best_for': req.body.best_for,
+      'category': req.body.category,
       'price': req.body.price,
       'schedule': req.body.schedule,
       'link': req.body.link,
+      'instructorName': req.body.instructorName,
+      'email': req.body.email,
+      'password': req.body.password,
     };
     await db.collection('classes').updateOne({
       '_id': ObjectId(id)
@@ -145,31 +139,16 @@ async function main(){
     res.send(deleteAclass)
   })
   
-  //Delete a class
-  app.get('/deleteClass/:id', async function(req, res){
-    //retrieve from the mongo db the document with the same req.params.id
-    const db = MongoUtil.getDB();
-    const documentToDelete = await db.collection('classes').findOne({
-         '_id': ObjectId(req.params.id)
-    })
-
-    res.render('confirm_delete_class_record',{
-      'classRecord': documentToDelete
-    })
-  })
-
   app.get('/delete.class.2/:id', async function(req, res){
     //retrieve from the mongo db the document with the same req.params.id
     const db = MongoUtil.getDB();
     const documentToDelete = await db.collection('classes').findOne({
          '_id': ObjectId(req.params.id)
     })
-
     res.render('confirm_delete_class_record',{
       'classRecord': documentToDelete
     })
   })
-
 
 
 
@@ -200,23 +179,28 @@ async function main(){
     let classRecords = await db.collection('classes').find({}).toArray();
     res.send(classRecords);
   });
-  // working - Add a class 2
-  // app.post("/Class", async function (req, res) {
-  //   console.log(req.body)
-  //   const postAclass = {
-  //     name: req.body.name,
-  //     location: req.body.location,
-  //     price: req.body.price,
-  //     schedule: req.body.schedule,
-  //     link: req.body.link,
-  //     email: req.body.email,
-  //     password: req.body.password,
-  //   };
-  //   const db = MongoUtil.getDB();
-  //   const classes = await db.collection('classes').insertOne(postAclass)
-  //   res.send(classes);
-  // });
 
+  //Wonderful! It's working! - Add a class
+  app.post("/TryClass", async function (req, res) {
+    console.log(req.body)
+    const postAclass = {
+      name: req.body.name,
+      location: req.body.location,
+      price: req.body.price,
+      schedule: req.body.schedule,
+      link: req.body.link,
+      email: req.body.email,
+      password: req.body.password,
+      duration: req.body.duration,
+      complexity: [req.body.complexity],
+      best_for: req.body.best_for,
+      category: req.body.category,
+      instructorName: req.body.instructorName,
+    };
+    const db = MongoUtil.getDB();
+    const classes = await db.collection('classes').insertOne(postAclass)
+    res.send(classes);
+  });
 
 
   // working - Edit a class  2
@@ -241,36 +225,32 @@ async function main(){
       res.send("Your email or passowrd did not match any admin's credentials")
     }
   });
-
-  //working - Delete a class 2
-  app.delete("/deleteAclass/:id", async function(req, res){
-    const db = MongoUtil.getDB()
-    let deleteAclass = {
-      'name': req.body.name,
-      'location': req.body.location,
-      'price': req.body.price,
-      'schedule': req.body.schedule,
-      'link': req.body.link,
-    };
-    await db.collection('classes').deleteOne({
-      '_id': ObjectId(req.params.id)
-    })
-    res.send(deleteAclass)
-  })
-  
-  //Delete a class 2
-  app.get('/deleteMyClass/:id', async function(req, res){
-    //retrieve from the mongo db the document with the same req.params.id
+   // working - Display all 30 mins classes  
+   app.get("/durationClassesSearch", async function (req, res) {
     const db = MongoUtil.getDB();
-    const documentToDelete = await db.collection('classes').findOne({
-         '_id': ObjectId(req.params.id)
-    })
+    let classRecords = await db.collection('classes').find(
+      {"duration":"30mins"}
+      ).toArray();
+    res.send(classRecords);
+  });
 
-    res.render('confirm_delete_class_record',{
-      'classRecord': documentToDelete
-    })
-  })
+   // working - Display all 1hr classes  
+   app.get("/oneHR", async function (req, res) {
+    const db = MongoUtil.getDB();
+    let classRecords = await db.collection('classes').find(
+      {"duration":"1hr"}
+      ).toArray();
+    res.send(classRecords);
+  });
 
+  // working - Display all 1hr classes  
+  app.get("/twoHR", async function (req, res) {
+    const db = MongoUtil.getDB();
+    let classRecords = await db.collection('classes').find(
+      {"duration":"2hrs"}
+      ).toArray();
+    res.send(classRecords);
+  });
 
   //End of Trial Second Batch 2
 
@@ -286,7 +266,7 @@ async function main(){
     res.json({token: token});
   });
 
-
+  
 
   // get a list of users  
   app.get("/home", ensureToken, async function (req, res) {
@@ -300,7 +280,6 @@ async function main(){
             }
     })
   });
-
 
    // working - Post a user
    app.post("/SignUp", async function (req, res) {
